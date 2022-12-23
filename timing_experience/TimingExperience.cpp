@@ -92,12 +92,12 @@ namespace TimingExperience {
 #if MF_WINDOWS
         cout << "Time for PathFileExists: ";
         cout << TimeWithRepetition([]() {
-            PathFileExists(file_L);
+            PathFileExistsA(FILE_NAME);
         }) << endl;
 
         cout << "Time for GetFileAttributes: ";
         cout << TimeWithRepetition([]() {
-            DWORD attr = GetFileAttributes(file_L);
+            DWORD attr = GetFileAttributesA(FILE_NAME);
         }) << endl;
 #endif // WIN32
 
@@ -125,13 +125,13 @@ namespace TimingExperience {
         cout << "Time for GetFileAttributesEx: ";
         cout << TimeWithRepetition([]() {
             WIN32_FILE_ATTRIBUTE_DATA fileInfo;
-            GetFileAttributesEx(file_L, GetFileExInfoStandard, (void *)&fileInfo);
+            GetFileAttributesExA(FILE_NAME, GetFileExInfoStandard, (void *)&fileInfo);
         }) << endl;
 
         cout << "Time for GetFileSizeEx: ";
         cout << TimeWithRepetition([]() {
-            HANDLE file = CreateFile(
-                file_L, GENERIC_READ, FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, NULL, nullptr);
+            HANDLE file = CreateFileA(
+                    FILE_NAME, GENERIC_READ, FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, NULL, nullptr);
             LARGE_INTEGER res;
             GetFileSizeEx(file, &res);
             CloseHandle(file);
@@ -200,7 +200,7 @@ namespace TimingExperience {
         cout << "Time for Windows syscalls: ";
         cout << TimeWithRepetition([&buffer]() {
             int file;
-            _sopen_s(&file, file_name, _O_RDONLY, _SH_DENYNO, _S_IREAD);
+            _sopen_s(&file, FILE_NAME, _O_RDONLY, _SH_DENYNO, _S_IREAD);
             auto tmp = _read(file, buffer.data(), BUFFER_SIZE - 1);
             _close(file);
         }) << endl;
