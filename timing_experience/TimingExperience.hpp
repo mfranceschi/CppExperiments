@@ -8,22 +8,21 @@
 #include <cstdlib>
 
 namespace TimingExperience {
-    void RunAll();
+void RunAll();
 
-    void timingTimeThis();
+void timingTimeThis();
 
-    void timingTheFileExistence();
+void timingTheFileExistence();
 
-    void timingTheFileSize();
+void timingTheFileSize();
 
-    void timingWchar_tConversion();
+void timingWchar_tConversion();
 
-    void timingFileReading();
+void timingFileReading();
 
-    void timingCtimeFunctions();
+void timingCtimeFunctions();
 
-    constexpr std::size_t
-    NUMBER_OF_ITERATIONS = 10 * 1000;
+constexpr std::size_t NUMBER_OF_ITERATIONS = 10 * 1000;
 } // namespace TimingExperience
 
-#endif //CPPEXPERIMENTS_TIMINGEXPERIENCE_HPP
+#endif // CPPEXPERIMENTS_TIMINGEXPERIENCE_HPP

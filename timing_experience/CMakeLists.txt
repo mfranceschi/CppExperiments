@@ -1,4 +1,4 @@
-add_executable(TimingExperience2 TimingExperience.hpp TimingExperience.cpp ActionToTime.cpp ActionToTime.hpp TimeThis.hpp TimeThis.cpp)
+add_executable(TimingExperience2 TimingExperience.hpp TimingExperience.cpp ActionToTime.cpp ActionToTime.hpp TimeThis.hpp TimeThis.cpp theMain.cpp)
 target_link_libraries(TimingExperience2 PRIVATE MF_ALL)
 
 

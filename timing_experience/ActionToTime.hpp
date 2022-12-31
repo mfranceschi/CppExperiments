@@ -12,30 +12,26 @@
 using Procedure = std::function<void(void)>;
 using DummyPredicate = std::function<bool(void)>;
 
-extern const Procedure NO_OP;
-
+/**
+ * An action to run and time.
+ */
 struct ActionToTime {
   ActionToTime(const std::string &name, const Procedure &action);
-
-  ActionToTime(const std::string &name, const Procedure &action,
-               const Procedure &setUp, const Procedure &tearDown);
 
   void doRun(std::uint64_t repetitions);
 
   const std::string name;
   const Procedure action;
-
-  const Procedure setUp = NO_OP;
-  const Procedure tearDown = NO_OP;
 };
+
+/**
+ * An action to run and time.
+ * The action is a function that returns a boolean which shall be always true.
+ */
 
 struct ActionWithResultToTime : public ActionToTime {
   ActionWithResultToTime(const std::string &name,
                          const DummyPredicate &predicate);
-
-  ActionWithResultToTime(const std::string &name,
-                         const DummyPredicate &predicate,
-                         const Procedure &setUp, const Procedure &tearDown);
 
   const DummyPredicate predicate;
 };

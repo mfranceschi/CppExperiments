@@ -1,18 +1,13 @@
 #include "TimingExperience.hpp"
 
 #include <sys/stat.h>
-
-#include <array>
-#include <chrono>
-#include <cstring>
-#include <ctime>
-#include <functional>
-#include <iostream>
-#include <string>
+#include <sys/types.h>
 
 #include "ActionToTime.hpp"
-#include "MF/Filesystem.hpp"
-#include "TimeThis.hpp"
+#include <array>
+#include <fstream>
+#include <iostream>
+#include <memory>
 
 #if MF_WINDOWS
 #include <Shlwapi.h>
@@ -24,13 +19,6 @@
 #define stat _stat
 #pragma comment(lib, "Shlwapi.lib")
 #endif
-
-using std::cout;
-using std::endl;
-
-static inline double TimeWithRepetition(const std::function<void()> &func) {
-  return TimeThis(TimingExperience::NUMBER_OF_ITERATIONS, func);
-}
 
 // Returns the same C-string but converted in wchar_t*.
 // It is created using new[] --> please use delete[] after use!
@@ -69,11 +57,11 @@ void RunAll() {
 
 void timingTimeThis() {
   ActionToTime("TimeThis", []() {}).doRun(NUMBER_OF_ITERATIONS);
-  cout << endl;
+  std::cout << std::endl;
 }
 
 void timingTheFileExistence() {
-  cout << "Timing the file existence functions !" << endl;
+  std::cout << "Timing the file existence functions !" << std::endl;
 
   ActionWithResultToTime("stat", []() {
     struct stat statStruct {};
@@ -90,11 +78,11 @@ void timingTheFileExistence() {
   }).doRun(NUMBER_OF_ITERATIONS);
 #endif // WIN32
 
-  cout << endl;
+  std::cout << std::endl;
 }
 
 void timingTheFileSize() {
-  cout << "Timing the file size functions !" << endl;
+  std::cout << "Timing the file size functions !" << std::endl;
 
   ActionWithResultToTime("fopen then fseek", []() {
     const auto theFile = std::fopen(EXISTING_FILE_NAME, "r");
@@ -130,11 +118,11 @@ void timingTheFileSize() {
   }).doRun(NUMBER_OF_ITERATIONS);
 #endif // WIN32
 
-  cout << endl;
+  std::cout << std::endl;
 }
 
 void timingWchar_tConversion() {
-  cout << "Timing char to wchar_t conversion functions!" << endl;
+  std::cout << "Timing char to wchar_t conversion functions!" << std::endl;
   const std::string input = EXISTING_FILE_NAME;
   const std::wstring expected(input.cbegin(), input.cend());
 
@@ -149,11 +137,11 @@ void timingWchar_tConversion() {
     return std::wstring(input.cbegin(), input.cend()) == expected;
   }).doRun(NUMBER_OF_ITERATIONS);
 
-  cout << endl;
+  std::cout << std::endl;
 }
 
 void timingFileReading() {
-  cout << "Timing functions for reading 5 chars in a file!" << endl;
+  std::cout << "Timing functions for reading 5 chars in a file!" << std::endl;
   static constexpr std::size_t BUFFER_SIZE = 6;
   static_assert(BUFFER_SIZE < EXISTING_FILE_SIZE,
                 "We won't be able to read 5 chars "
@@ -195,11 +183,12 @@ void timingFileReading() {
   }).doRun(NUMBER_OF_ITERATIONS);
 #endif // _MSC_VER
 
-  cout << endl;
+  std::cout << std::endl;
 }
 
 void timingCtimeFunctions() {
-  cout << "Timing <ctime> conversion functions between tm and time_t !" << endl;
+  std::cout << "Timing <ctime> conversion functions between tm and time_t !"
+            << std::endl;
   time_t timestamp = time(nullptr);
   tm tmStruct{};
 
@@ -230,8 +219,3 @@ void timingCtimeFunctions() {
   }).doRun(NUMBER_OF_ITERATIONS);
 }
 } // namespace TimingExperience
-
-int main() {
-  TimingExperience::RunAll();
-  return 0;
-}
