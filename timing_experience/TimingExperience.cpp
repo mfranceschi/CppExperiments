@@ -135,17 +135,19 @@ void timingTheFileSize() {
 
 void timingWchar_tConversion() {
   cout << "Timing char to wchar_t conversion functions!" << endl;
+  const std::string input = EXISTING_FILE_NAME;
+  const std::wstring expected(input.cbegin(), input.cend());
 
-  cout << "Time for mbstowcs_s: ";
-  cout << TimeWithRepetition([]() {
-    std::unique_ptr<wchar_t[]> newptr(ToWchar_t(EXISTING_FILE_NAME));
-  }) << endl;
+  ActionWithResultToTime("mbstowcs_s", [&]() {
+    wchar_t *result = ToWchar_t(EXISTING_FILE_NAME);
+    bool isOkay = expected == result;
+    delete[] result;
+    return isOkay;
+  }).doRun(NUMBER_OF_ITERATIONS);
 
-  cout << "Time for wstring creation: ";
-  cout << TimeWithRepetition([]() {
-    std::string temp = EXISTING_FILE_NAME;
-    std::wstring wideTemp = std::wstring(temp.cbegin(), temp.cend());
-  }) << endl;
+  ActionWithResultToTime("wstring constructor", [&]() {
+    return std::wstring(input.cbegin(), input.cend()) == expected;
+  }).doRun(NUMBER_OF_ITERATIONS);
 
   cout << endl;
 }
