@@ -155,48 +155,44 @@ void timingWchar_tConversion() {
 void timingFileReading() {
   cout << "Timing functions for reading 5 chars in a file!" << endl;
   static constexpr std::size_t BUFFER_SIZE = 6;
+  static_assert(BUFFER_SIZE < EXISTING_FILE_SIZE,
+                "We won't be able to read 5 chars "
+                "since the EXISTING_FILE_SIZE is smaller.");
   std::array<char, BUFFER_SIZE> buffer{};
 
-  cout << "Time for FILE* with fgets: ";
-  cout << TimeWithRepetition([&buffer]() {
+  ActionToTime("FILE* with fgets", [&]() {
     PtrFILE theFile(std::fopen(EXISTING_FILE_NAME, "r"), std::fclose);
     fgets(buffer.data(), BUFFER_SIZE, theFile.get());
-  }) << endl;
+  }).doRun(NUMBER_OF_ITERATIONS);
 
-  cout << "Time for FILE* with fgetc: ";
-  cout << TimeWithRepetition([&buffer]() {
+  ActionToTime("FILE* with fgetc", [&]() {
     PtrFILE theFile(std::fopen(EXISTING_FILE_NAME, "r"), std::fclose);
     for (std::size_t i = 0; i < BUFFER_SIZE; ++i) {
       buffer.at(i) = static_cast<char>(fgetc(theFile.get()));
     }
     buffer[BUFFER_SIZE - 1] = '\0';
-  }) << endl;
+  }).doRun(NUMBER_OF_ITERATIONS);
 
-  cout << "Time for ifstream with getline: ";
-  cout << TimeWithRepetition([&buffer]() {
+  ActionToTime("ifstream with getline", [&]() {
     std::ifstream ifs(EXISTING_FILE_NAME);
     ifs.getline(buffer.data(), BUFFER_SIZE);
-    ifs.close();
-  }) << endl;
+  }).doRun(NUMBER_OF_ITERATIONS);
 
-  cout << "Time for ifstream with get: ";
-  cout << TimeWithRepetition([&buffer]() {
+  ActionToTime("ifstream with get", [&]() {
     std::ifstream ifs(EXISTING_FILE_NAME);
     for (int i = 0; i < BUFFER_SIZE; ++i) {
       buffer.at(i) = static_cast<char>(ifs.get());
     }
     buffer[BUFFER_SIZE - 1] = '\0';
-    ifs.close();
-  }) << endl;
+  }).doRun(NUMBER_OF_ITERATIONS);
 
 #if defined _MSC_VER
-  cout << "Time for Windows syscalls: ";
-  cout << TimeWithRepetition([&buffer]() {
+  ActionToTime("ifstream with getline", [&]() {
     int file;
     _sopen_s(&file, EXISTING_FILE_NAME, _O_RDONLY, _SH_DENYNO, _S_IREAD);
-    auto tmp = _read(file, buffer.data(), BUFFER_SIZE - 1);
+    _read(file, buffer.data(), BUFFER_SIZE - 1);
     _close(file);
-  }) << endl;
+  }).doRun(NUMBER_OF_ITERATIONS);
 #endif // _MSC_VER
 
   cout << endl;
@@ -204,34 +200,34 @@ void timingFileReading() {
 
 void timingCtimeFunctions() {
   cout << "Timing <ctime> conversion functions between tm and time_t !" << endl;
-  time_t timet = time(nullptr);
-  tm tmt{};
+  time_t timestamp = time(nullptr);
+  tm tmStruct{};
 
-  cout << "Time for localtime: ";
-  cout << TimeWithRepetition([&timet, &tmt]() { tmt = *localtime(&timet); })
-       << endl;
+  ActionToTime("localtime", [&]() {
+    tmStruct = *localtime(&timestamp);
+  }).doRun(NUMBER_OF_ITERATIONS);
 
-#if defined __STDC_LIB_EXT1__ && __STDC_WANT_LIB_EXT1__ == 1
-  cout << "Time for localtime_s: ";
-  cout << TimeWithRepetition([&timet, &tmt]() { localtime_s(&tmt, &timet); })
-       << endl;
+#if MF_WINDOWS || defined(__STDC_LIB_EXT1__) && __STDC_WANT_LIB_EXT1__ == 1
+  ActionToTime("localtime_s", [&]() {
+    localtime_s(&tmStruct, &timestamp);
+  }).doRun(NUMBER_OF_ITERATIONS);
 
-  cout << "Time for gmtime_s: ";
-  cout << TimeWithRepetition([&timet, &tmt]() { gmtime_s(&tmt, &timet); })
-       << endl;
+  ActionToTime("gmtime_s", [&]() {
+    gmtime_s(&tmStruct, &timestamp);
+  }).doRun(NUMBER_OF_ITERATIONS);
 #endif
 
-  cout << "Time for mktime (with local time tm): ";
-  cout << TimeWithRepetition([&timet, &tmt]() { timet = mktime(&tmt); })
-       << endl;
+  ActionToTime("mktime (using local time) in struct tm", [&]() {
+    timestamp = mktime(&tmStruct);
+  }).doRun(NUMBER_OF_ITERATIONS);
 
-  cout << "Time for gmtime: ";
-  cout << TimeWithRepetition([&timet, &tmt]() { tmt = *gmtime(&timet); })
-       << endl;
+  ActionToTime("gmtime", [&]() {
+    tmStruct = *gmtime(&timestamp);
+  }).doRun(NUMBER_OF_ITERATIONS);
 
-  cout << "Time for mktime (with GMT time tm): ";
-  cout << TimeWithRepetition([&timet, &tmt]() { timet = mktime(&tmt); })
-       << endl;
+  ActionToTime("mktime (using local time) in struct tm", [&]() {
+    timestamp = mktime(&tmStruct);
+  }).doRun(NUMBER_OF_ITERATIONS);
 }
 } // namespace TimingExperience
 

@@ -1,4 +1,4 @@
-add_executable(TimingExperience2 TimingExperience.hpp TimingExperience.cpp ActionToTime.cpp ActionToTime.hpp TimeThis.hpp)
+add_executable(TimingExperience2 TimingExperience.hpp TimingExperience.cpp ActionToTime.cpp ActionToTime.hpp TimeThis.hpp TimeThis.cpp)
 target_link_libraries(TimingExperience2 PRIVATE MF_ALL)
 
 
@@ -8,7 +8,7 @@ if (NOT EXISTS ${EXISTING_FILE_NAME})
 endif ()
 file(SIZE ${EXISTING_FILE_NAME} EXISTING_FILE_SIZE)
 
-target_compile_definitions(TimingExperience2 PRIVATE EXISTING_FILE_NAME="${EXISTING_FILE_NAME}" EXISTING_FILE_SIZE=${EXISTING_FILE_SIZE} _CRT_SECURE_NO_WARNINGS=1)
+target_compile_definitions(TimingExperience2 PRIVATE EXISTING_FILE_NAME="${EXISTING_FILE_NAME}" EXISTING_FILE_SIZE=${EXISTING_FILE_SIZE} _CRT_SECURE_NO_WARNINGS=1 __STDC_WANT_LIB_EXT1__=1)
 
 if (MINGW)
     set_source_files_properties(
