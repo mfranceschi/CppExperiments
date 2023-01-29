@@ -21,13 +21,16 @@ Create a header file as follows:
 #define MY_BEAUTIFUL_ICON 201
 ```
 
-As part of the sources of your executable (direct sources of the target, or as `INTERFACE` source file of a target you
-are linking with), include a `.rc` file that contains the following lines:
+Create a resource file as follows:
 
 ```c++
+// File MyResource.rc
 #include "MyResource.hpp"
 MY_BEAUTIFUL_ICON ICON "relative_path_to_icon.ico"
 ```
+
+The `.rc` file must be part of the sources of your executable: directly using `target_sources`, or as an `INTERFACE` source file of a target you
+are linking with.
 
 If, at some point of your program, you need to get a HICON of your app icon, do this:
 
@@ -39,7 +42,12 @@ HICON myIcon = static_cast<HICON>(
         IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR
     )
 );
-// If myIcon == nullptr then an error occurred from LoadImage. Read below if error is 0x715.
+if (myIcon == nullptr) {
+    // An error occurred from LoadImage. Read below if error is 0x715.
+    // TODO: Handle the error
+}
+// TODO: use the HICON
+DestroyIcon(myIcon);
 ```
 
 ### My notes
@@ -53,4 +61,4 @@ built and then linked to the executable (so typically a static library) then it 
 okay.
 
 The error I had when working with (2) was `ERROR_RESOURCE_TYPE_NOT_FOUND` = 1813 (0x715). It is sad that this is not
-reported by the build system (or maybe I have missed it).
+reported directly by the build system (or maybe I have missed it).

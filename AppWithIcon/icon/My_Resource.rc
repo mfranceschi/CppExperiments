@@ -1,4 +1,12 @@
 #include "My_Resource.hpp"
 
-// Icons
+// File format: .SVG
+// Causes error RC2175
+// MY_BEAUTIFUL_ICON ICON "newton_balls_pendulum_science_icon_233288.svg"
+
+// File format: .PNG
+// Causes error RC2175
+// MY_BEAUTIFUL_ICON ICON "newton_balls_pendulum_science_icon_233288.png"
+
+// File format: .ICO
 MY_BEAUTIFUL_ICON ICON "newton_balls_pendulum_science_icon_233288.ico"
