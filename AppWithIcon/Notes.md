@@ -2,14 +2,55 @@
 
 This is a MWP for setting an icon on an executable file.
 
+Objectives:
+
+- (1) When the program is running, in the tasks bar, the icon of the program is our icon.
+- (2) (if relevant) We are able to get a reference to the icon.
+- (3) On the file explorer, the icon of the program is our icon.
+
+I am using an icon file downloaded from https://icon-icons.com/icon/newton-balls-pendulum-science/233288.
+
 ## Windows
 
-As part of your exe sources, include a .rc file that contains the following line:
+### How-to
+
+Create a header file as follows:
 
 ```c++
-MY_ICON_NAME ICON 1 "relative_path_to_icon.ico"
+// File MyResource.hpp
+#define MY_BEAUTIFUL_ICON 201
 ```
 
-The ICON with the smallest ID will be used as your app icon on the task bar when running.
+As part of the sources of your executable (direct sources of the target, or as `INTERFACE` source file of a target you
+are linking with), include a `.rc` file that contains the following lines:
 
-If you also want to have that icon visible in the Windows explorer, TODO.
+```c++
+#include "MyResource.hpp"
+MY_BEAUTIFUL_ICON ICON "relative_path_to_icon.ico"
+```
+
+If, at some point of your program, you need to get a HICON of your app icon, do this:
+
+```c++
+HICON myIcon = static_cast<HICON>(
+    LoadImage(
+        GetModuleHandle(nullptr), 
+        MAKEINTRESOURCE(MY_BEAUTIFUL_ICON),
+        IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR
+    )
+);
+// If myIcon == nullptr then an error occurred from LoadImage. Read below if error is 0x715.
+```
+
+### My notes
+
+The icon macro name or numerical value doesn't matter much - except that it may be possible (I haven't tested) that, if
+there is >1 ICON in the `.rc` file, the one with the smallest numeric value is used for (1) and (3).
+
+I had a couple of issues with objectives (2) with `LoadImage` and (3). I think that the most important point is that
+the `.rc` file is only built and linked directly with the executable we want. If it is linked with an artifact that is
+built and then linked to the executable (so typically a static library) then it won't work, even though objective (1) is
+okay.
+
+The error I had when working with (2) was `ERROR_RESOURCE_TYPE_NOT_FOUND` = 1813 (0x715). It is sad that this is not
+reported by the build system (or maybe I have missed it).

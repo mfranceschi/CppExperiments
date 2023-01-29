@@ -1,2 +1,2 @@
 
-#define IDI_MYICON 201
+#define MY_BEAUTIFUL_ICON 12345

@@ -1,4 +1,4 @@
 #include "My_Resource.hpp"
 
 // Icons
-IDI_MYICON ICON "newton_balls_pendulum_science_icon_233288.ico"
+MY_BEAUTIFUL_ICON ICON "newton_balls_pendulum_science_icon_233288.ico"
