@@ -8,3 +8,4 @@ link_libraries(MF_ALL MF_SystemErrors)
 
 add_subdirectory(timing_experience)
 add_subdirectory(AppWithIcon)
+add_subdirectory(EnvironmentTests)

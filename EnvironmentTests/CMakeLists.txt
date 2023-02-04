@@ -1,0 +1,1 @@
+add_executable(EnvironmentTests EnvironmentTestsMain.cpp)

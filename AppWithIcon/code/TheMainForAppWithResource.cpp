@@ -14,7 +14,7 @@ int main() {
         LoadImage(GetModuleHandle(nullptr), MAKEINTRESOURCE(MY_BEAUTIFUL_ICON),
                   IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR) == nullptr);
   } catch (const MF::SystemErrors::SystemError &systemError) {
-    std::cout << "System error! 0x" << std::hex << systemError.getErrorCode()
+    std::cerr << "System error! 0x" << std::hex << systemError.getErrorCode()
               << " - " << systemError.what() << std::endl;
     // return 1;
   }
