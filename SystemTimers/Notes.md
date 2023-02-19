@@ -10,8 +10,18 @@ The Win32 [SetTimer](https://learn.microsoft.com/en-us/windows/win32/api/winuser
 
 In other words, this API is only meant to work with apps that have a message queue, which is not what I am looking for.
 
-## Timer-queue timers
+### Timer-queue timers
 
-TODO...
-- ref to the fact that [it works for non-service apps](https://learn.microsoft.com/en-us/windows/win32/api/threadpoollegacyapiset/)
-- need for own timer queue or use default timer queue?
+I have found a few different APIs for creating timers depending on what kind of app it is and how it wants to interact with the timer object. [This page lists 4 of them](https://www.codeproject.com/Articles/1236/Timers-Tutorial).
+
+The one that I have found to be working and fitting my need is the "Timer-queue timer". The idea is: you create a collection of timers which is called a **Timer Queue** (note, this is optional), and you can add **Timers** to this timer queue. Features:
+- It will actually call the callback function once the timer elapses!
+- It can be used also for timers that are periodic, using the optional `period` parameter when creating the timer.
+- It is described as lightweight.
+- The delay and the period of a specific timer [can be changed after creation](https://learn.microsoft.com/en-us/windows/win32/api/threadpoollegacyapiset/nf-threadpoollegacyapiset-changetimerqueuetimer), as long as it is not considered as having finished its task (such as a one-shot timer that is done running). 
+- API resolution is in milliseconds.
+
+My findings:
+- It seems to be part of a legacy API, according to the [header name](https://learn.microsoft.com/en-us/windows/win32/api/threadpoollegacyapiset/). It was introduced with Windows 2000 (the `_WIN32_WINNT` is the one of [Windows 2000](https://learn.microsoft.com/en-us/cpp/porting/modifying-winver-and-win32-winnt)). This could mean that it will be deprecated or removed at some point, though the documentation doesn't mention anything like that.
+- The doc says that [it is used by system services](https://learn.microsoft.com/en-us/windows/win32/api/threadpoollegacyapiset/), but it does not seem to be a requirement, since I could make it work easily with a minimal console program.
+- Using the default timer queue (I mean, not creating your own and passing `nullptr` as the timer queue parameter) works as well. I think it is useful if you want to have the ability to delete all your timers at once easily: just [delete your timer queue](https://learn.microsoft.com/en-us/windows/win32/api/threadpoollegacyapiset/nf-threadpoollegacyapiset-deletetimerqueueex).

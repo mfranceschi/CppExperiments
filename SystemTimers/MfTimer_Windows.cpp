@@ -6,12 +6,30 @@
 
 #include "MfTimer.hpp"
 #include <Windows.h>
-#include <atomic>
-#include <iostream>
 #include <mutex>
 #include <stdexcept>
-#include <unordered_map>
 
+/**
+ * Set <code>API_TO_USE</code> to this value to use
+ * the <code>SetTimer</code> API.
+ */
+#define API_TO_USE_SET_TIMER 1
+
+/**
+ * Set <code>API_TO_USE</code> to this value to use
+ * the <code>CreateTimerQueueTimer</code> API.
+ */
+#define API_TO_USE_TIMER_QUEUE_TIMER 2
+
+#ifndef API_TO_USE
+/**
+ * Change the value to one of the above to set which API family to use,
+ * The value set is compile-checked.
+ */
+#define API_TO_USE API_TO_USE_TIMER_QUEUE_TIMER
+#endif
+
+#if API_TO_USE == API_TO_USE_SET_TIMER
 /*
 static std::unordered_map<UINT, std::function<void()>> timerIdsToCallbacks{};
 
@@ -58,12 +76,12 @@ void CALLBACK myTimerRoutine(PVOID lpParam, BOOLEAN TimerOrWaitFired) {
 }
  */
 
-void CALLBACK myTimerRoutine(PVOID lpParam, BOOLEAN TimerOrWaitFired) {
-  std::cout << __func__ << std::endl;
-}
+#elif API_TO_USE == API_TO_USE_TIMER_QUEUE_TIMER
 
-static std::atomic<unsigned int> atomicInt{};
-
+/**
+ * Contains the function to call.
+ * The destructor releases the timer HANDLE, if any.
+ */
 struct MfTimer_Windows : MfTimer {
   const std::function<void()> callWhenElapsed;
 
@@ -79,6 +97,22 @@ struct MfTimer_Windows : MfTimer {
   HANDLE timerHandle = nullptr;
 };
 
+/**
+ * Unique callback for all timers.
+ * @param lpParam Pointer to MfTimer_Windows*
+ * @param TimerOrWaitFired
+ */
+void CALLBACK myTimerRoutine(PVOID lpParam, BOOLEAN TimerOrWaitFired) {
+  (void)TimerOrWaitFired;
+
+  // Note: in theory we cannot end up in a situation
+  // where the callback is called
+  // and the timer has been deleted = the destructor has been called == lpParam
+  // points to some already-freed memory.
+  auto *mfTimerWindows = static_cast<MfTimer_Windows *>(lpParam);
+  mfTimerWindows->callWhenElapsed();
+}
+
 static HANDLE myTimerQueue = nullptr;
 static std::once_flag onceFlag{};
 
@@ -92,18 +126,13 @@ makeTimer(const std::chrono::nanoseconds &duration,
 
   auto timerPtr = std::make_shared<MfTimer_Windows>(callWhenElapsed);
 
-  /*
-  auto timerId = atomicInt++;
-  timerIdsToCallbacks.insert(std::make_pair(timerId, callWhenElapsed));
-   */
-
   HANDLE returnedHandle;
   HANDLE timerQueue = nullptr;
   auto parameters = timerPtr.get();
   DWORD dueTime =
       std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
   DWORD period = 0;
-  ULONG flags =  WT_EXECUTEONLYONCE;
+  ULONG flags = WT_EXECUTEONLYONCE;
 
   BOOL success =
       CreateTimerQueueTimer(&returnedHandle, timerQueue, myTimerRoutine,
@@ -115,5 +144,8 @@ makeTimer(const std::chrono::nanoseconds &duration,
 
   return timerPtr;
 }
+#else
+#error Please use one of the allowed API families!
+#endif
 
 #endif
