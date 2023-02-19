@@ -6,8 +6,10 @@
 
 #include "MfTimer.hpp"
 #include <Windows.h>
+#include <iostream>
 #include <mutex>
 #include <stdexcept>
+#include <unordered_map>
 
 /**
  * Set <code>API_TO_USE</code> to this value to use
@@ -26,12 +28,17 @@
  * Change the value to one of the above to set which API family to use,
  * The value set is compile-checked.
  */
-#define API_TO_USE API_TO_USE_TIMER_QUEUE_TIMER
+#define API_TO_USE API_TO_USE_SET_TIMER
 #endif
 
 #if API_TO_USE == API_TO_USE_SET_TIMER
-/*
 static std::unordered_map<UINT, std::function<void()>> timerIdsToCallbacks{};
+static void handleNoMoreUserHandleError() {
+  std::cerr << "Unable to create any more system handle. Returning empty "
+               "timer handle and silencing following identical errors."
+            << std::endl;
+}
+static std::once_flag onceFlag{};
 
 static void __stdcall myTimerProc(HWND windowHandle, UINT message, UINT timerId,
                                   DWORD systemTime) {
@@ -54,27 +61,18 @@ makeTimer(const std::chrono::nanoseconds &duration,
       SetTimer(nullptr, 0, elapse, static_cast<TIMERPROC>(myTimerProc));
 
   if (timerId == 0) {
+    auto lastError = GetLastError();
+    if (lastError == ERROR_NO_MORE_USER_HANDLES) {
+      std::call_once(onceFlag, handleNoMoreUserHandleError);
+      return {};
+    }
+
+    std::cerr << std::hex << "Error! GetLastError = 0x" << lastError << ".";
     throw std::runtime_error("Error!");
   }
   timerIdsToCallbacks.insert(std::make_pair(timerId, callWhenElapsed));
   return std::make_shared<MfTimer>();
 }
- */
-
-/*
-static std::unordered_map<unsigned int, std::function<void()>>
-    timerIdsToCallbacks{};
-
-void CALLBACK myTimerRoutine(PVOID lpParam, BOOLEAN TimerOrWaitFired) {
-  std::cout << __func__ << std::endl;
-  (void)TimerOrWaitFired;
-
-  const auto foundItem = timerIdsToCallbacks.find((unsigned int)lpParam);
-  if (foundItem != timerIdsToCallbacks.cend()) {
-    foundItem->second();
-  }
-}
- */
 
 #elif API_TO_USE == API_TO_USE_TIMER_QUEUE_TIMER
 
