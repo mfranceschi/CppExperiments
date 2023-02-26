@@ -7,23 +7,31 @@
 
 #include <chrono>
 #include <functional>
+#include <iostream>
 #include <memory>
+
 
 using namespace std::chrono_literals;
 
-struct MfTimer {};
+struct MfTimer {
+    virtual std::chrono::nanoseconds getTimeBeforeNextExpiration() const = 0;
 
-template <typename Duration_t>
-std::shared_ptr<MfTimer> makeTimer(
-    const Duration_t &duration,
-    const std::function<void()> &callWhenElapsed = []() {}) {
-  return makeTimer(
-      std::chrono::duration_cast<std::chrono::nanoseconds>(duration),
-      callWhenElapsed);
+    virtual std::chrono::nanoseconds getPeriod() const = 0;
+
+    virtual ~MfTimer() = default;
+};
+
+std::shared_ptr<MfTimer>
+makeTimerWithNanos(const std::chrono::nanoseconds &duration,
+                   const std::function<void()> &callWhenElapsed);
+
+template<typename Duration_t>
+std::shared_ptr<MfTimer>
+makeTimer(const Duration_t &duration,
+          const std::function<void()> &callWhenElapsed) {
+    return makeTimerWithNanos(
+            std::chrono::duration_cast<std::chrono::nanoseconds>(duration),
+            callWhenElapsed);
 }
-
-std::shared_ptr<MfTimer> makeTimer(
-    const std::chrono::nanoseconds &duration,
-    const std::function<void()> &callWhenElapsed = []() {});
 
 #endif // MFRANCESCHI_CPPEXPERIMENTS_MFTIMER_HPP

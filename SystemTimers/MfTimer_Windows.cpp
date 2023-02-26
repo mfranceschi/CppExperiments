@@ -53,7 +53,7 @@ static void __stdcall myTimerProc(HWND windowHandle, UINT message, UINT timerId,
 }
 
 std::shared_ptr<MfTimer>
-makeTimer(const std::chrono::nanoseconds &duration,
+_makeTimerWithNanos(const std::chrono::nanoseconds &duration,
           const std::function<void()> &callWhenElapsed) {
   UINT elapse =
       std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
@@ -115,7 +115,7 @@ static HANDLE myTimerQueue = nullptr;
 static std::once_flag onceFlag{};
 
 std::shared_ptr<MfTimer>
-makeTimer(const std::chrono::nanoseconds &duration,
+_makeTimerWithNanos(const std::chrono::nanoseconds &duration,
           const std::function<void()> &callWhenElapsed) {
   std::call_once(
       onceFlag,
