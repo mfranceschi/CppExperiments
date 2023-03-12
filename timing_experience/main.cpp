@@ -57,7 +57,7 @@ void timingTheFileExistence() {
     }).doRun();
 #endif // WIN32
 
-    std::cout << std::endl;
+    std::cout << getFastestAction() << std::endl;
 }
 
 void timingTheFileSize() {
@@ -97,7 +97,7 @@ void timingTheFileSize() {
     }).doRun();
 #endif // WIN32
 
-    std::cout << std::endl;
+    std::cout << getFastestAction() << std::endl;
 }
 
 void timingWchar_tConversion() {
@@ -116,7 +116,7 @@ void timingWchar_tConversion() {
         return std::wstring(input.cbegin(), input.cend()) == expected;
     }).doRun();
 
-    std::cout << std::endl;
+    std::cout << getFastestAction() << std::endl;
 }
 
 void timingFileReading() {
@@ -162,7 +162,7 @@ void timingFileReading() {
     }).doRun();
 #endif // _MSC_VER
 
-    std::cout << std::endl;
+    std::cout << getFastestAction() << std::endl;
 }
 
 void timingCtimeFunctions() {
@@ -196,6 +196,8 @@ void timingCtimeFunctions() {
     ActionToTime("mktime (using local time) in struct tm", [&]() {
         timestamp = mktime(&tmStruct);
     }).doRun();
+
+    std::cout << getFastestAction() << std::endl;
 }
 
 int main() {
