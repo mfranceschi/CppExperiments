@@ -47,14 +47,7 @@ static inline wchar_t *ToWchar_t(const char *source) {
 using PtrFILE = std::unique_ptr<std::FILE, decltype(&std::fclose)>;
 
 namespace TimingExperience {
-void RunAll() {
-  timingTimeThis();
-  timingTheFileExistence();
-  timingTheFileSize();
-  timingWchar_tConversion();
-  timingFileReading();
-  timingCtimeFunctions();
-}
+
 
 void timingTimeThis() {
   ActionToTime("TimeThis", []() {}).doRun(NUMBER_OF_ITERATIONS);
@@ -219,4 +212,13 @@ void timingCtimeFunctions() {
     timestamp = mktime(&tmStruct);
   }).doRun(NUMBER_OF_ITERATIONS);
 }
+
+    void RunAll() {
+        timingTimeThis();
+        timingTheFileExistence();
+        timingTheFileSize();
+        timingWchar_tConversion();
+        timingFileReading();
+        timingCtimeFunctions();
+    }
 } // namespace TimingExperience

@@ -1,23 +1,34 @@
-add_executable(TimingExperience2 TimingExperience.hpp TimingExperience.cpp ActionToTime.cpp ActionToTime.hpp TimeThis.hpp TimeThis.cpp theMain.cpp)
+# add_executable(TimingExperience2 TimingExperience.hpp TimingExperience.cpp ActionToTime.cpp ActionToTime.hpp TimeThis.hpp TimeThis.cpp theMain.cpp Utils.hpp Utils_timeThis.cpp Utils_ActionToTime.cpp Utils_toWchar_t.cpp main.cpp)
+add_executable(TimingExperience2 Utils.hpp Utils_timeThis.cpp Utils_ActionToTime.cpp Utils_toWchar_t.cpp main.cpp)
 target_link_libraries(TimingExperience2 PRIVATE MF_ALL)
 
-
+# Grab a file that will exist and be accessible at runtime.
 set(EXISTING_FILE_NAME "${CMAKE_HOME_DIRECTORY}/LICENSE")
 if (NOT EXISTS ${EXISTING_FILE_NAME})
     message(FATAL_ERROR "File name to read does not exist: ${EXISTING_FILE_NAME}")
 endif ()
 file(SIZE ${EXISTING_FILE_NAME} EXISTING_FILE_SIZE)
 
-target_compile_definitions(TimingExperience2 PRIVATE EXISTING_FILE_NAME="${EXISTING_FILE_NAME}" EXISTING_FILE_SIZE=${EXISTING_FILE_SIZE} _CRT_SECURE_NO_WARNINGS=1 __STDC_WANT_LIB_EXT1__=1)
+target_compile_definitions(TimingExperience2
+    PRIVATE
+        EXISTING_FILE_NAME="${EXISTING_FILE_NAME}"
+        EXISTING_FILE_SIZE=${EXISTING_FILE_SIZE}
+
+        # Windows-specific
+        _CRT_SECURE_NO_WARNINGS=1
+
+        # *nix-specific
+        __STDC_WANT_LIB_EXT1__=1
+        )
 
 if (MINGW)
     set_source_files_properties(
-            TimingExperience.cpp
+            ARCHIVE_TimingExperience.cpp
             PROPERTIES
             COMPILE_FLAGS "-Wno-conversion-null"
     )
 
     if (WIN32)
-        target_link_libraries(TimingExperience2 PRIVATE Shlwapi.lib)
+        # target_link_libraries(TimingExperience2 PRIVATE Shlwapi.lib)
     endif ()
 endif ()
