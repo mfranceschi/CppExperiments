@@ -12,15 +12,12 @@
 
 using namespace std;
 
-static std::vector<std::pair<std::string, Ns>> latestActions{};
-
-bool operator<(const std::pair<std::string, Ns> &pair1, const std::pair<std::string, Ns> &pair2) {
-    return pair1.second < pair2.second;
-}
+using Pair = std::pair<std::string, Ns>;
+static std::vector<Pair> latestActions{};
 
 void ActionToTime::doRun(std::uint64_t repetitions) {
-    auto dur = TimeThis(repetitions, action);
-    cout << "Time for " << this->name << ": " << dur.count()
+    Ns dur = TimeThis(repetitions, action);
+    cout << "Time for " << this->name << ": " << dur.count() << "ns"
          << endl;
 
     latestActions.emplace_back(name, dur);
@@ -34,13 +31,16 @@ ActionWithResultToTime::ActionWithResultToTime(const string &name,
         : ActionToTime(name, [&predicate]() { assert(predicate()); }) {}
 
 std::pair<std::string, Ns> getFastestAction() {
-    auto myIt = std::min_element(latestActions.cbegin(), latestActions.cend());
+    auto myIt = std::min_element(latestActions.cbegin(), latestActions.cend(),
+                                 [](const Pair &pair1, const Pair &pair2) {
+                                     return pair1.second < pair2.second;
+                                 });
     std::pair<std::string, Ns> myCopy = *myIt;
     latestActions.clear();
     return myCopy;
 }
 
-std::ostream &operator<<(std::ostream &theStream, const std::pair<std::string, Ns> &toPrint) {
+std::ostream &operator<<(std::ostream &theStream, const Pair &toPrint) {
     theStream << "The fastest action is " << toPrint.first << " with ";
 
     if (toPrint.second.count() > 10'000) {

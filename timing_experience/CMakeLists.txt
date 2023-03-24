@@ -1,4 +1,4 @@
-# add_executable(TimingExperience2 TimingExperience.hpp TimingExperience.cpp ActionToTime.cpp ActionToTime.hpp TimeThis.hpp TimeThis.cpp theMain.cpp Utils.hpp Utils_timeThis.cpp Utils_ActionToTime.cpp Utils_toWchar_t.cpp main.cpp)
+# I am adding '2' at the end of the executable name because of a naming clash.
 add_executable(TimingExperience2 Utils.hpp Utils_timeThis.cpp Utils_ActionToTime.cpp Utils_toWchar_t.cpp main.cpp)
 target_link_libraries(TimingExperience2 PRIVATE MF_ALL)
 

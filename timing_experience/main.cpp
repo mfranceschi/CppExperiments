@@ -7,6 +7,7 @@
 #include <array>
 #include <fstream>
 #include <iostream>
+#include <sys/stat.h>
 
 #if MF_WINDOWS
 
@@ -22,21 +23,9 @@
 #pragma comment(lib, "Shlwapi.lib")
 #endif
 
-/*
-#include <sys/stat.h>
-#include <sys/types.h>
-
-#include "ActionToTime.hpp"
-#include <array>
-#include <cstring>
-#include <fstream>
-#include <iostream>
-#include <memory>
- */
-
 void timingTimeThis() {
     ActionToTime("TimeThis", [] {}).doRun();
-    std::cout << std::endl;
+    std::cout << getFastestAction() << std::endl;
 }
 
 void timingTheFileExistence() {
@@ -55,7 +44,7 @@ void timingTheFileExistence() {
     ActionWithResultToTime("GetFileAttributesA", [] {
         return GetFileAttributesA(EXISTING_FILE_NAME) != INVALID_FILE_ATTRIBUTES;
     }).doRun();
-#endif // WIN32
+#endif
 
     std::cout << getFastestAction() << std::endl;
 }
@@ -77,7 +66,6 @@ void timingTheFileSize() {
     }).doRun();
 
 #if MF_WINDOWS
-
     ActionWithResultToTime("GetFileAttributesExA", [] {
         WIN32_FILE_ATTRIBUTE_DATA fileInfo;
         GetFileAttributesExA(EXISTING_FILE_NAME, GetFileExInfoStandard,
@@ -95,7 +83,7 @@ void timingTheFileSize() {
         CloseHandle(file);
         return res.QuadPart == EXISTING_FILE_SIZE;
     }).doRun();
-#endif // WIN32
+#endif
 
     std::cout << getFastestAction() << std::endl;
 }
@@ -105,14 +93,14 @@ void timingWchar_tConversion() {
     const std::string input = EXISTING_FILE_NAME;
     const std::wstring expected(input.cbegin(), input.cend());
 
-    ActionWithResultToTime("mbstowcs_s", [&]() {
+    ActionWithResultToTime("mbstowcs or mbstowcs_s", [&] {
         wchar_t *result = ToWchar_t(EXISTING_FILE_NAME);
         bool isOkay = expected == result;
         delete[] result;
         return isOkay;
     }).doRun();
 
-    ActionWithResultToTime("wstring constructor", [&]() {
+    ActionWithResultToTime("wstring constructor", [&] {
         return std::wstring(input.cbegin(), input.cend()) == expected;
     }).doRun();
 
@@ -127,12 +115,12 @@ void timingFileReading() {
                   "since the EXISTING_FILE_SIZE is smaller.");
     std::array<char, BUFFER_SIZE> buffer{};
 
-    ActionToTime("FILE* with fgets", [&]() {
+    ActionToTime("FILE* with fgets", [&] {
         PtrFILE theFile(std::fopen(EXISTING_FILE_NAME, "r"), std::fclose);
         fgets(buffer.data(), BUFFER_SIZE, theFile.get());
     }).doRun();
 
-    ActionToTime("FILE* with fgetc", [&]() {
+    ActionToTime("FILE* with fgetc", [&] {
         PtrFILE theFile(std::fopen(EXISTING_FILE_NAME, "r"), std::fclose);
         for (std::size_t i = 0; i < BUFFER_SIZE; ++i) {
             buffer.at(i) = static_cast<char>(fgetc(theFile.get()));
@@ -140,12 +128,12 @@ void timingFileReading() {
         buffer[BUFFER_SIZE - 1] = '\0';
     }).doRun();
 
-    ActionToTime("ifstream with getline", [&]() {
+    ActionToTime("ifstream with getline", [&] {
         std::ifstream ifs(EXISTING_FILE_NAME);
         ifs.getline(buffer.data(), BUFFER_SIZE);
     }).doRun();
 
-    ActionToTime("ifstream with get", [&]() {
+    ActionToTime("ifstream with get", [&] {
         std::ifstream ifs(EXISTING_FILE_NAME);
         for (int i = 0; i < BUFFER_SIZE; ++i) {
             buffer.at(i) = static_cast<char>(ifs.get());
@@ -154,7 +142,7 @@ void timingFileReading() {
     }).doRun();
 
 #if defined _MSC_VER
-    ActionToTime("ifstream with getline", [&]() {
+    ActionToTime("ifstream with getline", [&] {
         int file;
         _sopen_s(&file, EXISTING_FILE_NAME, _O_RDONLY, _SH_DENYNO, _S_IREAD);
         _read(file, buffer.data(), BUFFER_SIZE - 1);
@@ -171,29 +159,29 @@ void timingCtimeFunctions() {
     time_t timestamp = time(nullptr);
     tm tmStruct{};
 
-    ActionToTime("localtime", [&]() {
+    ActionToTime("localtime", [&] {
         tmStruct = *localtime(&timestamp);
     }).doRun();
 
-#if MF_WINDOWS || defined(__STDC_LIB_EXT1__) && __STDC_WANT_LIB_EXT1__ == 1
-    ActionToTime("localtime_s", [&]() {
+#if MF_WINDOWS || defined(__STDC_LIB_EXT1__)
+    ActionToTime("localtime_s", [&] {
         localtime_s(&tmStruct, &timestamp);
     }).doRun();
 
-    ActionToTime("gmtime_s", [&]() {
+    ActionToTime("gmtime_s", [&] {
         gmtime_s(&tmStruct, &timestamp);
     }).doRun();
 #endif
 
-    ActionToTime("mktime (using local time) in struct tm", [&]() {
+    ActionToTime("mktime (using local time) in struct tm", [&] {
         timestamp = mktime(&tmStruct);
     }).doRun();
 
-    ActionToTime("gmtime", [&]() {
+    ActionToTime("gmtime", [&] {
         tmStruct = *gmtime(&timestamp);
     }).doRun();
 
-    ActionToTime("mktime (using local time) in struct tm", [&]() {
+    ActionToTime("mktime (using local time) in struct tm", [&] {
         timestamp = mktime(&tmStruct);
     }).doRun();
 
