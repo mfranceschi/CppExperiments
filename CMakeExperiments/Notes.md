@@ -1,0 +1,3 @@
+todo...
+
+I wanted to try things out with INTERFACE, OBJECT and STATIC target types with CMake and different toolchains.
