@@ -28,7 +28,7 @@
  * Change the value to one of the above to set which API family to use,
  * The value set is compile-checked.
  */
-#define API_TO_USE API_TO_USE_SET_TIMER
+#define API_TO_USE API_TO_USE_TIMER_QUEUE_TIMER
 #endif
 
 #if API_TO_USE == API_TO_USE_SET_TIMER
@@ -81,18 +81,37 @@ _makeTimerWithNanos(const std::chrono::nanoseconds &duration,
  * The destructor releases the timer HANDLE, if any.
  */
 struct MfTimer_Windows : MfTimer {
-  const std::function<void()> callWhenElapsed;
+    const std::function<void()> callWhenElapsed;
 
-  explicit MfTimer_Windows(const std::function<void()> &callWhenElapsed)
-      : callWhenElapsed(callWhenElapsed){};
+    explicit MfTimer_Windows(const std::function<void()> &callWhenElapsed)
+            : callWhenElapsed(callWhenElapsed) {};
 
-  ~MfTimer_Windows() {
-    if (timerHandle != nullptr) {
-      DeleteTimerQueueTimer(nullptr, timerHandle, nullptr);
+    std::chrono::milliseconds period{};
+
+    std::chrono::nanoseconds getPeriod() const override {
+        return std::chrono::duration_cast<std::chrono::nanoseconds>(period);
     }
-  }
 
-  HANDLE timerHandle = nullptr;
+    std::chrono::steady_clock::time_point expectedNextPing{};
+
+    std::chrono::nanoseconds getTimeBeforeNextExpiration() const override {
+        auto now = std::chrono::steady_clock::now();
+        auto diff = now - expectedNextPing;
+
+        if (diff > 0ns) {
+            return diff;
+        } else {
+            return 0ns;
+        }
+    }
+
+    ~MfTimer_Windows() override {
+        if (timerHandle != nullptr) {
+            DeleteTimerQueueTimer(nullptr, timerHandle, nullptr);
+        }
+    }
+
+    HANDLE timerHandle = nullptr;
 };
 
 /**
@@ -101,47 +120,53 @@ struct MfTimer_Windows : MfTimer {
  * @param TimerOrWaitFired
  */
 void CALLBACK myTimerRoutine(PVOID lpParam, BOOLEAN TimerOrWaitFired) {
-  (void)TimerOrWaitFired;
+    (void) TimerOrWaitFired;
 
-  // Note: in theory we cannot end up in a situation
-  // where the callback is called
-  // and the timer has been deleted = the destructor has been called == lpParam
-  // points to some already-freed memory.
-  auto *mfTimerWindows = static_cast<MfTimer_Windows *>(lpParam);
-  mfTimerWindows->callWhenElapsed();
+    // Note: in theory we cannot end up in a situation
+    // where the callback is called
+    // and the timer has been deleted = the destructor has been called == lpParam
+    // points to some already-freed memory.
+    auto *mfTimerWindows = static_cast<MfTimer_Windows *>(lpParam);
+    mfTimerWindows->callWhenElapsed();
+    if (mfTimerWindows->period > 0ns) {
+        mfTimerWindows->expectedNextPing = std::chrono::steady_clock::now() + mfTimerWindows->period;
+    }
 }
 
 static HANDLE myTimerQueue = nullptr;
 static std::once_flag onceFlag{};
 
 std::shared_ptr<MfTimer>
-_makeTimerWithNanos(const std::chrono::nanoseconds &duration,
-          const std::function<void()> &callWhenElapsed) {
-  std::call_once(
-      onceFlag,
-      [](HANDLE *timerQueueRef) { *timerQueueRef = CreateTimerQueue(); },
-      &myTimerQueue);
+makeTimerWithNanos(const std::chrono::nanoseconds &duration,
+                   const std::function<void()> &callWhenElapsed) {
+    std::call_once(
+            onceFlag,
+            [](HANDLE *timerQueueRef) { *timerQueueRef = CreateTimerQueue(); },
+            &myTimerQueue);
 
-  auto timerPtr = std::make_shared<MfTimer_Windows>(callWhenElapsed);
+    auto timerPtr = std::make_shared<MfTimer_Windows>(callWhenElapsed);
 
-  HANDLE returnedHandle;
-  HANDLE timerQueue = nullptr;
-  auto parameters = timerPtr.get();
-  DWORD dueTime =
-      std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
-  DWORD period = 0;
-  ULONG flags = WT_EXECUTEONLYONCE;
+    HANDLE returnedHandle;
+    HANDLE timerQueue = nullptr;
+    auto parameters = timerPtr.get();
+    DWORD dueTime =
+            std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
+    DWORD period = 0;
+    ULONG flags = WT_EXECUTEONLYONCE;
 
-  BOOL success =
-      CreateTimerQueueTimer(&returnedHandle, timerQueue, myTimerRoutine,
-                            parameters, dueTime, period, flags);
-  if (!success) {
-    throw std::runtime_error("Error!");
-  }
-  timerPtr->timerHandle = returnedHandle;
+    BOOL success =
+            CreateTimerQueueTimer(&returnedHandle, timerQueue, myTimerRoutine,
+                                  parameters, dueTime, period, flags);
+    if (!success) {
+        throw std::runtime_error("Error!");
+    }
+    timerPtr->timerHandle = returnedHandle;
+    timerPtr->period = std::chrono::milliseconds(period);
+    timerPtr->expectedNextPing = std::chrono::steady_clock::now() + duration;
 
-  return timerPtr;
+    return timerPtr;
 }
+
 #else
 #error Please use one of the allowed API families!
 #endif

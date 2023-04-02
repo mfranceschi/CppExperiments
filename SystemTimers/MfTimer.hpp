@@ -14,8 +14,17 @@
 using namespace std::chrono_literals;
 
 struct MfTimer {
+    /**
+     * Returns the time before the next timer expiration.
+     * On Windows, it's an estimation.
+     * 0 = not armed.
+     */
     virtual std::chrono::nanoseconds getTimeBeforeNextExpiration() const = 0;
 
+    /**
+     * Returns the period, as specified in the constructor.
+     * 0 = no period, one-off timer.
+     */
     virtual std::chrono::nanoseconds getPeriod() const = 0;
 
     virtual ~MfTimer() = default;
